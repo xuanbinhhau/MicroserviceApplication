@@ -11,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/userprofiles")
 @RequiredArgsConstructor
@@ -20,8 +22,8 @@ public class UserProfileController {
 
     UserProfileService userProfileService;
 
-    @GetMapping("{id}")
-    UserProfileResponse getUserProfile(@PathVariable String id){
-        return userProfileService.getUserProfile(id);
+    @GetMapping()
+    List<UserProfileResponse> getUserProfile(){
+        return userProfileService.getUserProfile();
     }
 }
