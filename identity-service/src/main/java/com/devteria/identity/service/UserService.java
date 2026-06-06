@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.devteria.identity.mapper.ProfileMapper;
 import com.devteria.identity.repository.httpClient.ProfileClient;
+import org.apache.commons.fileupload.RequestContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +28,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +57,7 @@ public class UserService {
 
         var profilerequest = profileMapper.toProfileCreationRequest(request);
         profilerequest.setUserId(user.getId());
-        var profileResponse = profileClient.createProfile(profilerequest);
+
         return userMapper.toUserResponse(user);
     }
 
