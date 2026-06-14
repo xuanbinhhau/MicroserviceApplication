@@ -2,11 +2,14 @@ package com.devteria.identity.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
+import com.devteria.event.dto.NotificationEvent;
 import com.devteria.identity.mapper.ProfileMapper;
 import com.devteria.identity.repository.httpClient.ProfileClient;
 import org.apache.commons.fileupload.RequestContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +44,7 @@ public class UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     ProfileClient profileClient;
+    KafkaTemplate<String, Object> kafkaTemplate;
     private final ProfileMapper profileMapper;
 
     public UserResponse createUser(UserCreationRequest request) {
@@ -57,6 +61,15 @@ public class UserService {
 
         var profilerequest = profileMapper.toProfileCreationRequest(request);
         profilerequest.setUserId(user.getId());
+
+        NotificationEvent notificationEvent = NotificationEvent.builder()
+                .chanel("EMAIL")
+                .recipient(request.getEmail())
+                .subject("Welcom to bookteria")
+                .body("Hello" + request.getUsername() )
+                .build();
+        //Publish message to kafka
+        kafkaTemplate.send("Notification-delivery",notificationEvent);
 
         return userMapper.toUserResponse(user);
     }

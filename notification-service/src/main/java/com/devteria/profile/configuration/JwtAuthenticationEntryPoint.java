@@ -1,6 +1,6 @@
 package com.devteria.profile.configuration;
 
-import com.devteria.profile.dto.ApiResponse;
+import com.devteria.profile.dto.response.ApiResponse;
 import com.devteria.profile.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
