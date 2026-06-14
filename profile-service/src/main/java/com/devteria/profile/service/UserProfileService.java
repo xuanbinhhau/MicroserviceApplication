@@ -3,6 +3,8 @@ package com.devteria.profile.service;
 import com.devteria.profile.dto.request.UserProfileRequest;
 import com.devteria.profile.dto.response.UserProfileResponse;
 import com.devteria.profile.entity.UserProfile;
+import com.devteria.profile.errorcode.AppException;
+import com.devteria.profile.errorcode.ErrorCode;
 import com.devteria.profile.mapper.UserProfileMapper;
 import com.devteria.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
@@ -26,6 +28,20 @@ public class UserProfileService {
     public UserProfileResponse createUserProfile(UserProfileRequest userProfileRequest){
         UserProfile userProfile = userProfileMapper.toUserProfile(userProfileRequest);
         userProfileRepository.save(userProfile);
+        return userProfileMapper.toUserProfileReponse(userProfile);
+    }
+
+    public UserProfileResponse getByUserId(String id){
+        UserProfile userProfile = userProfileRepository.findByUserId(id).orElseThrow(
+                ()->
+                new AppException(ErrorCode.USER_NOT_EXISTED)
+        );
+        return userProfileMapper.toUserProfileReponse(userProfile);
+    }
+    public UserProfileResponse getProfile(String id){
+        UserProfile userProfile = userProfileRepository.findById(id).orElseThrow(
+                ()-> new AppException(ErrorCode.USER_NOT_EXISTED)
+        );
         return userProfileMapper.toUserProfileReponse(userProfile);
     }
 

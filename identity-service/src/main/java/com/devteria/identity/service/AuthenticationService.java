@@ -42,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
+
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
 
@@ -125,7 +126,7 @@ public class AuthenticationService {
                 .toEpochMilli());
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getUsername())
+                .subject(user.getId())
                 .issuer("devteria.com")
                 .issueTime(issueTime)
                 .expirationTime(expiryTime)
