@@ -36,62 +36,69 @@ public class ConversationService {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         List<Conversation> conversations = conversationRepository.findAllByParticipantIdsContains(userId);
 
-         return conversations.stream().map(conversationMapper::toConversationResponse).toList();
+        return conversations.stream().map(this::toConversationResponse).toList();
     }
 
     public ConversationResponse create(ConversationRequest request) {
-        // Fetch user infor
+        // Fetch user infos
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         var userInfoResponse = profileClient.getProfile(userId);
-        var participantInfoResponse = profileClient.getProfile(request.getParticipantIds().getFirst());
+        var participantInfoResponse = profileClient.getProfile(
+                request.getParticipantIds().getFirst());
 
-        if (Objects.isNull(userInfoResponse) || Objects.isNull(participantInfoResponse)){
+        if (Objects.isNull(userInfoResponse) || Objects.isNull(participantInfoResponse)) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
-        var userInfor = userInfoResponse.getResult();
+
+        var userInfo = userInfoResponse.getResult();
         var participantInfo = participantInfoResponse.getResult();
 
         List<String> userIds = new ArrayList<>();
         userIds.add(userId);
         userIds.add(participantInfo.getUserId());
 
-        var sortedId = userIds.stream().sorted().toList();
+        var sortedIds = userIds.stream().sorted().toList();
+        String userIdHash = generateParticipantHash(sortedIds);
 
-        String userIdHash = generateParticipantHash(sortedId);
+        var conversation = conversationRepository.findByParticipantsHash(userIdHash)
+                .orElseGet(() -> {
+                    List<ParticipantInfo> participantInfos = List.of(
+                            ParticipantInfo.builder()
+                                    .userId(userInfo.getUserId())
+                                    .username(userInfo.getUsername())
+                                    .firstName(userInfo.getFirstName())
+                                    .lastName(userInfo.getLastName())
+                                    .avatar(userInfo.getAvatar())
+                                    .build(),
+                            ParticipantInfo.builder()
+                                    .userId(participantInfo.getUserId())
+                                    .username(participantInfo.getUsername())
+                                    .firstName(participantInfo.getFirstName())
+                                    .lastName(participantInfo.getLastName())
+                                    .avatar(participantInfo.getAvatar())
+                                    .build()
+                    );
 
-        List<ParticipantInfo> participantInfos = List.of(
-                ParticipantInfo.builder()
-                        .userId(userInfor.getId())
-                        .username(userInfor.getUsername())
-                        .firstName(userInfor.getFirstName())
-                        .lastName(userInfor.getLastName())
-                        .avatar(userInfor.getAvatar())
-                        .build(),
-                ParticipantInfo.builder()
-                        .userId(participantInfo.getId())
-                        .username(participantInfo.getUsername())
-                        .firstName(participantInfo.getFirstName())
-                        .lastName(participantInfo.getLastName())
-                        .avatar(participantInfo.getAvatar())
-                        .build()
-        );
-        // Build converstation infor
-        Conversation conversation = Conversation.builder()
-                .type(request.getType())
-                .createdDate(Instant.now())
-                .modifiedDate(Instant.now())
-                .participants(participantInfos)
-                .build();
+                    // Build conversation info
+                    Conversation newConversation = Conversation.builder()
+                            .type(request.getType())
+                            .participantsHash(userIdHash)
+                            .createdDate(Instant.now())
+                            .modifiedDate(Instant.now())
+                            .participants(participantInfos)
+                            .build();
 
-        conversation = conversationRepository.save(conversation);
-        return conversationMapper.toConversationResponse(conversation);
+                    return conversationRepository.save(newConversation);
+                });
+
+        return toConversationResponse(conversation);
     }
 
     private String generateParticipantHash(List<String> ids) {
         StringJoiner stringJoiner = new StringJoiner("_");
         ids.forEach(stringJoiner::add);
 
-        //SHA 256
+        // SHA 256
 
         return stringJoiner.toString();
     }
